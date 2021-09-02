@@ -1,11 +1,11 @@
-library(tidyverse)
-library(qiime2R)
-library(microbiome)
-library(phyloseq)
-library(ggpubr)
-library(RColorBrewer)
-library(shinyBS)
-library(shiny)
+library(ggplot2) ## Used
+library(dplyr) ## Used
+library(microbiome) ## Used
+library(ggpubr) ##Used
+library(phyloseq) ## Used
+library(RColorBrewer) ## Used
+library(shinyBS) ## Used
+library(shiny) ## Used 
 
 ### Possible names for the app:
 # shinyMicRobiota
@@ -16,8 +16,8 @@ library(shiny)
 # microbiotaViz
 # ############################
 
-ui <- fluidPage(titlePanel("shinyMicRobiota", windowTitle = "16S Microbial Analysis"),
-                tabsetPanel(              
+ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisation", windowTitle = "16S Microbial Analysis"),
+                tabsetPanel(          
                   tabPanel(title = "Data",
                            fluidRow(column(2, h2("Data set up"),
                                            h4(tags$b("Data Upload")),
@@ -51,9 +51,11 @@ ui <- fluidPage(titlePanel("shinyMicRobiota", windowTitle = "16S Microbial Analy
                                     column(4, h3("Metadata"),
                                            dataTableOutput("metadata")),
                            )),
-                  tabPanel(title = "Taxa Barplots",
+                  tabPanel(title = "Taxonomic Composition",
                            fluidRow(column(2, h3("Input Settings"),
-                                           textInput("barplotTitle", label = "Plot title"),
+                                           shinyBS::tipify(textInput("barplotTitle", label = "Plot title"),
+                                                  title = "Hint: Add your own title before exporting your plot.", 
+                                                  placement = "top", trigger = "hover"),
                                            p(selectInput("taxLevel", 
                                                           label = "Taxonomic Level",
                                                           choices = c("Kingdom", "Phylum", "Class", "Order", "Family", "Genus", "Species"),
@@ -61,14 +63,15 @@ ui <- fluidPage(titlePanel("shinyMicRobiota", windowTitle = "16S Microbial Analy
                                            selectInput("taxaPalette",
                                                        label = "Colour palette",
                                                        choices = c("Set3", "Paired", "Spectral", "RdYlGn"),
-                                                       selected = "Paired"),
+                                                       selected = "Spectral"),
                                            downloadButton("expBarplot", "Export Barplot")),
-                                    column(10, h3("Barplot of taxonomic composition"),
-                                           plotOutput("barplot"))
+                                    column(10, plotOutput("barplot"))
                            )),
                   tabPanel(title = "Alpha Diversity",
                            fluidRow(column(2, h3("Input Settings"),
-                                           textInput("alphaTitle", label = "Plot title"),
+                                           shinyBS::tipify(textInput("alphaTitle", label = "Plot title"), 
+                                                  title = "Hint: Add your own title before exporting your plot.", 
+                                                  placement = "top", trigger = "hover"),
                                            p(radioButtons("alphadivGeom", label = "Type of plot",
                                                           choiceNames = c("Jitter", "Boxplot"),
                                                           choiceValues = c("jitter", "boxplot"),
@@ -76,7 +79,7 @@ ui <- fluidPage(titlePanel("shinyMicRobiota", windowTitle = "16S Microbial Analy
                                            uiOutput("ADgroup_ui"),
                                            uiOutput("ADcol_ui"),
                                            radioButtons("checkRef", label = "Compare means:",
-                                                        choiceNames = c("Overall", "With reference group"),
+                                                        choiceNames = c("Overall", "Against reference group"),
                                                         choiceValues = c("overall", "refGroup"),
                                                         inline = TRUE),
                                            conditionalPanel("input.checkRef == 'refGroup'",
@@ -89,30 +92,33 @@ ui <- fluidPage(titlePanel("shinyMicRobiota", windowTitle = "16S Microbial Analy
                                                        label = "Colour palette",
                                                        choices = c("Dark2", "Set1", "Set2", "Set3", 
                                                                    "Pastel2", "Accent", "Paired", "Spectral"),
-                                                       selected = "Dark2"),
+                                                       selected = "Spectral"),
                                            p(downloadButton("expAlpha", "Export Plot"))),
                                     column(width = 5, plotOutput("alphadivPlot")),
                                     column(width = 4, h3("Alpha Diversity table"), dataTableOutput("alphadiv"))),
                            ),
                   tabPanel(title = "Beta Diversity",
                            fluidRow(column(2, h3("Input Settings"),
-                                           textInput("betaTitle", label = "Plot title"),
+                                           shinyBS::tipify(textInput("betaTitle", label = "Plot title"),
+                                                  title = "Hint: Add your own title before exporting your plot.", 
+                                                  placement = "top", trigger = "hover"),
                                            uiOutput("BDcol_ui"),
                                            selectInput("betaPalette",
                                                        label = "Colour palette",
-                                                       choices = c("Set1", "Dark2", "Paired"),
-                                                       selected = "Set1"),
+                                                       choices = c("Set1", "Dark2", "Paired", "Spectral"),
+                                                       selected = "Spectral"),
                                            p(downloadButton("expBeta", label = "Export plot"))),
-                                    column(10, h3("Beta diversity plot"),
-                                           plotOutput("betaPlot")))
+                                    column(10, plotOutput("betaPlot")))
                            ),
                   tabPanel(title = "Bacteroidetes to Firmicutes",
                            fluidRow(column(2, h3("Input Settings"),
-                                           textInput("bfTitle", label = "Plot title"),
+                                           shinyBS::tipify(textInput("bfTitle", label = "Plot title"),
+                                                  title = "Hint: Add your own title before exporting your plot.", 
+                                                  placement = "top", trigger = "hover"),
                                            uiOutput("BFgroup_ui"),
                                            uiOutput("BFcol_ui"),
                                            radioButtons("BFcheckRef", label = "Compare means:",
-                                                        choiceNames = c("Overall", "With reference group"),
+                                                        choiceNames = c("Overall", "Against reference group"),
                                                         choiceValues = c("overall", "refGroup"),
                                                         inline = TRUE),
                                            conditionalPanel("input.BFcheckRef == 'refGroup'",
@@ -125,9 +131,9 @@ ui <- fluidPage(titlePanel("shinyMicRobiota", windowTitle = "16S Microbial Analy
                                                        label = "Colour palette",
                                                        choices = c("Dark2", "Set1", "Set2", "Set3", 
                                                                    "Pastel2", "Accent", "Paired", "Spectral"),
-                                                       selected = "Dark2"),
+                                                       selected = "Spectral"),
                                            p(downloadButton("expBF", "Export Plot"))),
-                                    column(width = 5, plotOutput("bfPlot")))
+                                    column(width = 8, plotOutput("bfPlot")))
                   )
               )
 )
@@ -140,7 +146,7 @@ server <- function(input, output) {
     req(file)
     validate(need(ext == "rds", "Please upload an RDS file"))
     
-    readRDS(file$datapath)
+    base::readRDS(file$datapath)
   }, options = list(pageLength = 10))
     output$physeq_sum <- renderText({
       file <- input$physeq
@@ -149,7 +155,7 @@ server <- function(input, output) {
       req(file)
       validate(need(ext == "rds", "Please upload an RDS file"))
       
-      physeq <- readRDS(file$datapath)
+      physeq <- base::readRDS(file$datapath)
       
       microbiome::summarize_phyloseq(physeq) %>% as.list() %>% as.character()
    })
@@ -159,7 +165,7 @@ server <- function(input, output) {
       req(fileM)
       validate(need(extM == "rds", "Please upload an RDS file"))
       
-      metadata <- readRDS(fileM$datapath)
+      metadata <- base::readRDS(fileM$datapath)
       ColNames <- colnames(metadata)
       selectInput("group", "Group by", choices = ColNames,
                   selected = "Timepoint")
@@ -170,7 +176,7 @@ server <- function(input, output) {
       req(fileM)
       validate(need(extM == "rds", "Please upload an RDS file"))
       
-      metadata <- readRDS(fileM$datapath)
+      metadata <- base::readRDS(fileM$datapath)
       ColNames <- colnames(metadata)
       selectInput("colour", "Colour by", choices = ColNames,
                   selected = "Timepoint")
@@ -181,21 +187,20 @@ server <- function(input, output) {
       req(fileM)
       validate(need(extM == "rds", "Please upload an RDS file"))
       
-      metadata <- readRDS(fileM$datapath)
+      metadata <- base::readRDS(fileM$datapath)
       ColNames <- colnames(metadata)
       Groups <- metadata$Group %>% unique() %>% as.character()
       Timepoints <- metadata$Timepoint %>% unique() %>% as.character()
       Conditions <- metadata$Condition %>% unique() %>% as.character()
       Individuals <- metadata$individualID %>% unique() %>% as.character()
-      
 
-        tipify(selectInput("alphaRefGroup", "Reference group",
-                           choices = if (input$group == "individualID") { Individuals }
-                           else if (input$group == "Timepoint") { Timepoints }
-                           else if (input$group == "Group") { Groups }
-                           else if (input$group == "Condition") { Conditions }), 
-               title = "Hint: To compare means ensure that the Group and Colour options are the same.", 
-               placement = "top", trigger = "hover")
+      shinyBS::tipify(selectInput("alphaRefGroup", "Reference group",
+                         choices = if (input$group == "individualID") { Individuals }
+                         else if (input$group == "Timepoint") { Timepoints }
+                         else if (input$group == "Group") { Groups }
+                         else if (input$group == "Condition") { Conditions }), 
+             title = "Hint: To compare means ensure that the Group and Colour options are the same.", 
+             placement = "top", trigger = "hover")
     })
     output$ADsubsetCol_ui <- renderUI({
       req(input$ADsubsetTick)
@@ -204,7 +209,7 @@ server <- function(input, output) {
       req(fileM)
       validate(need(extM == "rds", "Please upload an RDS file"))
       
-      metadata <- readRDS(fileM$datapath)
+      metadata <- base::readRDS(fileM$datapath)
       ColNames <- colnames(metadata)
       Groups <- metadata$Group %>% unique() %>% as.character()
       Timepoints <- metadata$Timepoint %>% unique() %>% as.character()
@@ -221,7 +226,7 @@ server <- function(input, output) {
       req(fileM)
       validate(need(extM == "rds", "Please upload an RDS file"))
       
-      metadata <- readRDS(fileM$datapath)
+      metadata <- base::readRDS(fileM$datapath)
       ColNames <- colnames(metadata)
       Groups <- metadata$Group %>% unique() %>% as.character()
       Timepoints <- metadata$Timepoint %>% unique() %>% as.character()
@@ -236,147 +241,135 @@ server <- function(input, output) {
                   else if (input$ADsubsetCol == "Condition") { Conditions }
                   else if (input$ADsubsetCol == "sampleID") { Samples })
     })
-    output$barplot <- renderPlot({
+    plot_barplot <- reactive({
       file <- input$physeq
       ext <- tools::file_ext(file$datapath)
       
       req(file)
       validate(need(ext == "rds", "Please upload an RDS file"))
-      physeq <- readRDS(file$datapath)
+      physeq <- base::readRDS(file$datapath)
       
-      if (input$taxLevel == "Kingdom") {
+      p <- theme(legend.position = "bottom", 
+                 legend.title = element_text(size = 14), 
+                 axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.95),
+                 text = element_text(size = 14))
+      
+      taxaPlot <- if (input$taxLevel == "Kingdom") {
         kingdom_ps <- microbiome::transform(physeq, "compositional")
-        kingdom_ps <- aggregate_rare(kingdom_ps, level = "Kingdom", detection = 1/100, prevalence = 50/100)
-        kingdom_ps <- aggregate_taxa(kingdom_ps, level = "Kingdom")
+        kingdom_ps <- microbiome::aggregate_rare(kingdom_ps, level = "Kingdom", detection = 1/100, prevalence = 50/100)
+        kingdom_ps <- microbiome::aggregate_taxa(kingdom_ps, level = "Kingdom")
         
-        plot_composition(kingdom_ps, x.label = "Sample",
-                         plot.type = "barplot",
-                         sample.sort = "Bacteria") +
-          theme(legend.position = "bottom", 
-                legend.title = element_text(size = 14), 
-                axis.text.x = element_text(angle = 90, hjust = 1)) +
-          labs(title = "Kingdom-level Relative abundance",
+        taxaPlot <- microbiome::plot_composition(kingdom_ps, x.label = "Sample",
+                                                 plot.type = "barplot",
+                                                 sample.sort = "Bacteria") +
+          labs(title = input$barplotTitle,
                x = "Sample", y = "Relative Abundance",
                fill = "Kingdom") +
           scale_fill_brewer(palette = input$taxaPalette) +
-          theme(axis.text.x = element_text(angle = 90, size = 14), 
-                text = element_text(size = 14))
+          p
+        taxaPlot
       } else if (input$taxLevel == "Phylum") {
-          phylum_ps <- microbiome::transform(physeq, "compositional")
-          phylum_ps <- aggregate_rare(phylum_ps, level = "Phylum", detection = 1/100, prevalence = 50/100)
-          phylum_ps <- phylum_ps %>% aggregate_taxa(level = "Phylum") %>%  
-            microbiome::transform(transform = "compositional")
-          
-          plot_composition(phylum_ps, x.label = "Sample",
-                           plot.type = "barplot",
-                           sample.sort = "Bacteroidetes") +
-            theme(legend.position = "bottom", 
-                  legend.title = element_text(size = 14), 
-                  axis.text.x = element_text(angle = 90, hjust = 1)) +
-            labs(title = input$barplotTitle,
-                 x = "Sample", y = "Relative Abundance",
-                 fill = "Phylum") +
-            scale_fill_brewer(palette = input$taxaPalette) +
-            theme(axis.text.x = element_text(angle = 90, size = 14), 
-                  text = element_text(size = 14))
-      } else if (input$taxLevel == "Class") {
-        class_ps <- microbiome::transform(physeq, "compositional")
-        class_ps <- aggregate_rare(class_ps, level = "Class", detection = 1/100, prevalence = 50/100)
-        class_ps <- class_ps %>% aggregate_taxa(level = "Class") %>%  
+        phylum_ps <- microbiome::transform(physeq, "compositional")
+        phylum_ps <- microbiome::aggregate_rare(phylum_ps, level = "Phylum", detection = 1/100, prevalence = 50/100)
+        phylum_ps <- phylum_ps %>% microbiome::aggregate_taxa(level = "Phylum") %>%  
           microbiome::transform(transform = "compositional")
         
-        plot_composition(class_ps, x.label = "Sample",
-                         plot.type = "barplot",
-                         sample.sort = "Bacteroidia") +
-          theme(legend.position = "bottom", 
-                legend.title = element_text(size = 14), 
-                axis.text.x = element_text(angle = 90, hjust = 1)) +
+        taxaPlot <- microbiome::plot_composition(phylum_ps, x.label = "Sample",
+                                                 plot.type = "barplot",
+                                                 sample.sort = "Bacteroidetes") +
+          labs(title = input$barplotTitle,
+               x = "Sample", y = "Relative Abundance",
+               fill = "Phylum") +
+          scale_fill_brewer(palette = input$taxaPalette) +
+          p
+        taxaPlot
+      } else if (input$taxLevel == "Class") {
+        class_ps <- microbiome::transform(physeq, "compositional")
+        class_ps <- microbiome::aggregate_rare(class_ps, level = "Class", detection = 1/100, prevalence = 50/100)
+        class_ps <- class_ps %>% microbiome::aggregate_taxa(level = "Class") %>%  
+          microbiome::transform(transform = "compositional")
+        
+        taxaPlot <- microbiome::plot_composition(class_ps, x.label = "Sample",
+                                                 plot.type = "barplot",
+                                                 sample.sort = "Bacteroidia") +
           labs(title = input$barplotTitle,
                x = "Sample", y = "Relative Abundance",
                fill = "Class") +
           scale_fill_brewer(palette = input$taxaPalette) +
-          theme(axis.text.x = element_text(angle = 90, size = 14), 
-                text = element_text(size = 14))
+          p
+        taxaPlot
       } else if (input$taxLevel == "Order") {
         order_ps <- microbiome::transform(physeq, "compositional")
-        order_ps <- aggregate_rare(order_ps, level = "Order", detection = 1/100, prevalence = 50/100)
-        order_ps <- aggregate_taxa(order_ps, level = "Order") %>%  
+        order_ps <- microbiome::aggregate_rare(order_ps, level = "Order", detection = 1/100, prevalence = 50/100)
+        order_ps <- microbiome::aggregate_taxa(order_ps, level = "Order") %>%  
           microbiome::transform(transform = "compositional")
         
-        plot_composition(order_ps, x.label = "Sample",
-                         plot.type = "barplot",
-                         sample.sort = "Bacteroidales") +
-          theme(legend.position = "bottom", 
-                legend.title = element_text(size = 14), 
-                axis.text.x = element_text(angle = 90, hjust = 1)) +
+        taxaPlot <- microbiome::plot_composition(order_ps, x.label = "Sample",
+                                                 plot.type = "barplot",
+                                                 sample.sort = "Bacteroidales") +
           labs(title = input$barplotTitle,
                x = "Sample", y = "Relative Abundance",
                fill = "Order") +
           scale_fill_brewer(palette = input$taxaPalette) +
-          theme(axis.text.x = element_text(angle = 90, size = 14), 
-                text = element_text(size = 14))
+          p
+        taxaPlot
       } else if (input$taxLevel == "Family") {
         family_ps <- microbiome::transform(physeq, "compositional")
-        family_ps <- aggregate_rare(family_ps, level = "Family", detection = 1/100, prevalence = 50/100)
-        family_ps <- aggregate_taxa(family_ps, level = "Family") %>%  
+        family_ps <- microbiome::aggregate_rare(family_ps, level = "Family", detection = 1/100, prevalence = 50/100)
+        family_ps <- microbiome::aggregate_taxa(family_ps, level = "Family") %>%  
           microbiome::transform(transform = "compositional")
         
-        plot_composition(family_ps, x.label = "Sample",
-                         plot.type = "barplot",
-                         sample.sort = "Bacteroidaceae") +
-          theme(legend.position = "bottom", 
-                legend.title = element_text(size = 14), 
-                axis.text.x = element_text(angle = 90, hjust = 1)) +
+        taxaPlot <- microbiome::plot_composition(family_ps, x.label = "Sample",
+                                                 plot.type = "barplot",
+                                                 sample.sort = "S24-7") +
           labs(title = input$barplotTitle,
                x = "Sample", y = "Relative Abundance",
                fill = "Family") +
           scale_fill_brewer(palette = input$taxaPalette) +
-          theme(axis.text.x = element_text(angle = 90, size = 14), 
-                text = element_text(size = 14))
+          p
+        taxaPlot
       } else if (input$taxLevel == "Genus") {
         genus_ps <- microbiome::transform(physeq, "compositional")
-        genus_ps <- aggregate_rare(genus_ps, level = "Genus", detection = 1/100, prevalence = 50/100)
-        genus_ps <- aggregate_taxa(genus_ps, level = "Genus") %>%  
+        genus_ps <- microbiome::aggregate_rare(genus_ps, level = "Genus", detection = 1/100, prevalence = 50/100)
+        genus_ps <- microbiome::aggregate_taxa(genus_ps, level = "Genus") %>%  
           microbiome::transform(transform = "compositional")
         
-        plot_composition(genus_ps, x.label = "Sample",
-                         plot.type = "barplot",
-                         sample.sort = "Bacteroides") +
-          theme(legend.position = "bottom", 
-                legend.title = element_text(size = 14), 
-                axis.text.x = element_text(angle = 90, hjust = 1)) +
+        taxaPlot <- microbiome::plot_composition(genus_ps, x.label = "Sample",
+                                                 plot.type = "barplot",
+                                                 sample.sort = "Lactobacillus") +
           labs(title = input$barplotTitle,
                x = "Sample", y = "Relative Abundance",
                fill = "Genus") +
           scale_fill_brewer(palette = input$taxaPalette) +
-          theme(axis.text.x = element_text(angle = 90, size = 14), 
-                text = element_text(size = 14))
+          p
+        taxaPlot
       } else if (input$taxLevel == "Species") {
         species_ps <- microbiome::transform(physeq, "compositional")
-        species_ps <- aggregate_rare(species_ps, level = "Species", detection = 1/100, prevalence = 50/100)
-        species_ps <- aggregate_taxa(species_ps, level = "Species") %>%  
+        species_ps <- microbiome::aggregate_rare(species_ps, level = "Species", detection = 1/100, prevalence = 50/100)
+        species_ps <- microbiome::aggregate_taxa(species_ps, level = "Species") %>%  
           microbiome::transform(transform = "compositional")
         
-        plot_composition(species_ps, x.label = "Sample",
-                         plot.type = "barplot",
-                         sample.sort = "Unknown") +
-          theme(legend.position = "bottom", 
-                legend.title = element_text(size = 14), 
-                axis.text.x = element_text(angle = 90, hjust = 1)) +
+        taxaPlot <- microbiome::plot_composition(species_ps, x.label = "Sample",
+                                                 plot.type = "barplot",
+                                                 sample.sort = "Unknown") +
           labs(title = input$barplotTitle,
                x = "Sample", y = "Relative Abundance",
                fill = "Species") +
           scale_fill_brewer(palette = input$taxaPalette) +
-          theme(axis.text.x = element_text(angle = 90, size = 14), 
-                text = element_text(size = 14))
+          p
+        taxaPlot
       }
-    }, height = 600, width = 1000 )
+      taxaPlot
+    })
+    output$barplot <- renderPlot({
+      plot_barplot()
+    }, height = 800, width = 1200 )
     output$expBarplot <- downloadHandler(
       filename = function() {
         paste(input$barplotTitle)
       },
       content = function(file) {
-        ggplot2::ggsave(file, plot = last_plot(), device = "png")
+        ggplot2::ggsave(file, plot = plot_barplot(), device = "png")
       })
     output$alphadiv <- renderDataTable({
     file <- input$alphadiv
@@ -384,136 +377,146 @@ server <- function(input, output) {
     
     req(file)
     validate(need(ext == "rds", "Please upload an RDS file"))
-    readRDS(file$datapath)
+    base::readRDS(file$datapath)
   }, options = list(pageLength = 10))
-  output$alphadivPlot <- renderPlot({
+  plot_div <- reactive({
     file <- input$alphadiv
     ext <- tools::file_ext(file$datapath)
     
     req(file)
     validate(need(ext == "rds", "Please upload an RDS file"))
-    shannon <- readRDS(file$datapath)
+    shannon <- base::readRDS(file$datapath)
     
-    healthy_avg <- subset(shannon, shannon$Condition == "control") %>% 
-      summarize(avg = median(shannon_entropy)) %>%
-      pull(avg)
-    
-    p <- theme_bw(base_size = 14, 
-               base_family = "Open Sans", 
-               base_line_size = 0.09, 
-               base_rect_size = 0.1) +
-      theme(axis.text.x = element_text(size = 14), 
-            text = element_text(size = 14),
-            legend.position = "bottom")
+    p <- theme_classic(base_size = 14, base_family = "Open Sans",
+                       base_line_size = 0.09, base_rect_size = 0.1) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.02, hjust=0.95, size = 14),
+            text = element_text(size = 14), line = element_line(size = 0.1), 
+            rect = element_rect(size = 0.1), axis.title.y = element_text(vjust = 1), 
+            plot.margin = margin(2,2,2,0.5, "cm"), legend.position = "bottom")
     
     if (input$alphadivGeom == "jitter" && input$checkRef == "overall" && input$ADsubsetTick == "FALSE") {
-      shannon %>%
+      alphaPlot <- shannon %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           color = input$colour)) + 
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_color_brewer(palette = input$divPalette) +
-        geom_hline(aes(yintercept = healthy_avg), color = "gray70", size = 0.6) +
-        geom_jitter(size = 2, alpha = 0.5, width = 0.03) +
-        stat_summary(fun = "median", geom = "point", size = 3) +
-        stat_compare_means() +
-        p 
-      } else if (input$alphadivGeom == "boxplot" && input$checkRef == "overall" && input$ADsubsetTick == "FALSE") {
-      shannon %>%
+        geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
+        ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
+        ggpubr::stat_compare_means() +
+        p
+      alphaPlot
+    } else if (input$alphadivGeom == "boxplot" && input$checkRef == "overall" && input$ADsubsetTick == "FALSE") {
+      alphaPlot <- shannon %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           fill = input$colour)) +
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_fill_brewer(palette = input$divPalette) +
         geom_boxplot() +
-        stat_compare_means() +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
+        ggpubr::stat_compare_means() +
         p
-      } else if (input$alphadivGeom == "jitter" && input$checkRef == "refGroup" && input$ADsubsetTick == "FALSE") {
-      shannon %>%
+      alphaPlot
+    } else if (input$alphadivGeom == "jitter" && input$checkRef == "refGroup" && input$ADsubsetTick == "FALSE") {
+      alphaPlot <- shannon %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           color = input$colour)) + 
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_color_brewer(palette = input$divPalette) +
-        stat_compare_means(ref.group = input$alphaRefGroup) +
-        geom_hline(aes(yintercept = healthy_avg), color = "gray70", size = 0.6) +
-        geom_jitter(size = 2, alpha = 0.5, width = 0.03) +
-        stat_summary(fun = "median", geom = "point", size = 3) +
-        p 
-    } else if (input$alphadivGeom == "boxplot" && input$checkRef == "refGroup") {
-      shannon %>%
+        ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
+        geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
+        ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
+        p
+      alphaPlot
+    } else if (input$alphadivGeom == "boxplot" && input$checkRef == "refGroup" && input$ADsubsetTick == "FALSE") {
+      alphaPlot <- shannon %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           fill = input$colour)) +
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_fill_brewer(palette = input$divPalette) +
-        stat_compare_means(ref.group = input$alphaRefGroup) +
+        ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_boxplot() +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
         p
-    } else  if (input$alphadivGeom == "jitter" && input$checkRef == "overall" && input$ADsubsetTick == "TRUE") {
+      alphaPlot
+    } else if (input$alphadivGeom == "jitter" && input$checkRef == "overall" && input$ADsubsetTick == "TRUE") {
       subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
-      subsetAD %>%
+      alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           color = input$colour)) + 
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_color_brewer(palette = input$divPalette) +
-        geom_hline(aes(yintercept = healthy_avg), color = "gray70", size = 0.6) +
-        geom_jitter(size = 2, alpha = 0.5, width = 0.03) +
-        stat_summary(fun = "median", geom = "point", size = 3) +
-        stat_compare_means() +
-        p 
+        geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
+        ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
+        ggpubr::stat_compare_means() +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
+        p
+      alphaPlot
     } else if (input$alphadivGeom == "boxplot" && input$checkRef == "overall" && input$ADsubsetTick == "TRUE") {
       subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
-      subsetAD %>%
+      alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           fill = input$colour)) +
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_fill_brewer(palette = input$divPalette) +
         geom_boxplot() +
-        stat_compare_means() +
+        ggpubr::stat_compare_means() +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
         p
+      alphaPlot
     } else if (input$alphadivGeom == "jitter" && input$checkRef == "refGroup" && input$ADsubsetTick == "TRUE") {
       subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
-      subsetAD %>%
+      alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           color = input$colour)) + 
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_color_brewer(palette = input$divPalette) +
-        stat_compare_means(ref.group = input$alphaRefGroup) +
-        geom_hline(aes(yintercept = healthy_avg), color = "gray70", size = 0.6) +
-        geom_jitter(size = 2, alpha = 0.5, width = 0.03) +
-        stat_summary(fun = "median", geom = "point", size = 3) +
-        p 
+        ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
+        geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
+        ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
+        p
+      alphaPlot
     } else if (input$alphadivGeom == "boxplot" && input$checkRef == "refGroup" && input$ADsubsetTick == "TRUE") {
       subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
-      subsetAD %>%
+      alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
                           y = "shannon_entropy",
                           fill = input$colour)) +
         labs(y = "Shannon Diversity",
              title = input$alphaTitle) +
-        scale_fill_brewer(palette = input$divPalette) +
-        stat_compare_means(ref.group = input$alphaRefGroup) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
+        ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_boxplot() +
         p
+      alphaPlot
     }
-  }, height = 600, width = 700 )
+  })
+  output$alphadivPlot <- renderPlot({
+    plot_div()
+  }, height = 800, width = 800 )
   output$expAlpha <- downloadHandler(
     filename = function() {
       paste(input$alphaTitle)
     },
     content = function(file) {
-    ggplot2::ggsave(file, plot = last_plot(), device = "png")
+    ggplot2::ggsave(file, plot = plot_div(), device = "png", scale = 1)
     }
   )
   output$BDcol_ui <- renderUI({
@@ -522,44 +525,49 @@ server <- function(input, output) {
     req(fileM)
     validate(need(extM == "rds", "Please upload an RDS file"))
     
-    metadata <- readRDS(fileM$datapath)
+    metadata <- base::readRDS(fileM$datapath)
     ColNames <- colnames(metadata)
     selectInput("BDcolour", "Colour by", choices = ColNames,
                 selected = "Timepoint")
   })
-  output$betaPlot <- renderPlot({
+  plot_beta <- reactive({
     file1 <- input$betaCounts
     ext1 <- tools::file_ext(file1$datapath)
     
     req(file1)
     validate(need(ext1 == "rds", "Please upload an RDS file"))
-    betaCounts <- readRDS(file1$datapath)
+    betaCounts <- base::readRDS(file1$datapath)
     
     file2 <- input$betaOrd
     ext2 <- tools::file_ext(file2$datapath)
     
     req(file2)
     validate(need(ext2 == "rds", "Please upload an RDS file"))
-    betaOrd <- readRDS(file2$datapath)
+    betaOrd <- base::readRDS(file2$datapath)
     
-    plot_ordination(betaCounts, betaOrd, 
-                    color = input$BDcolour) +
-      geom_point(size = 3) +
+    betaPlot <- phyloseq::plot_ordination(betaCounts, betaOrd, 
+                                color = input$BDcolour) +
+      geom_point(size = 5) +
       labs(title = input$betaTitle) +
-      scale_color_brewer(palette = input$betaPalette) +
+      suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$betaPalette),times=4),
+                                           aesthetics = c("colour", "fill"))) +
       theme_bw(base_size = 24, 
                base_family = "Open Sans", 
                base_line_size = 0.09, 
                base_rect_size = 0.1) +
-      theme(axis.text.x = element_text(size = 14), 
+      theme(axis.text.x = element_text(size = 14, vjust = 0.2, hjust=0.95), 
             text = element_text(size = 14))
+    betaPlot
+  })
+  output$betaPlot <- renderPlot({
+    plot_beta()
   }, height = 700, width = 900 )
   output$expBeta <- downloadHandler(
     filename = function() {
       paste(input$betaTitle)
     },
     content = function(file) {
-      ggplot2::ggsave(file, plot = last_plot(), device = "png")
+      ggplot2::ggsave(file, plot = plot_beta(), device = "png", scale = 1)
     }
   )
   output$BFgroup_ui <- renderUI({
@@ -568,7 +576,7 @@ server <- function(input, output) {
     req(fileM)
     validate(need(extM == "rds", "Please upload an RDS file"))
     
-    metadata <- readRDS(fileM$datapath)
+    metadata <- base::readRDS(fileM$datapath)
     ColNames <- colnames(metadata)
     selectInput("BFgroup", "Group by", choices = ColNames,
                 selected = "Timepoint")
@@ -579,7 +587,7 @@ server <- function(input, output) {
     req(fileM)
     validate(need(extM == "rds", "Please upload an RDS file"))
     
-    metadata <- readRDS(fileM$datapath)
+    metadata <- base::readRDS(fileM$datapath)
     ColNames <- colnames(metadata)
     selectInput("BFcolour", "Colour by", choices = ColNames,
                 selected = "Timepoint")
@@ -590,14 +598,14 @@ server <- function(input, output) {
     req(fileM)
     validate(need(extM == "rds", "Please upload an RDS file"))
     
-    metadata <- readRDS(fileM$datapath)
+    metadata <- base::readRDS(fileM$datapath)
     ColNames <- colnames(metadata)
     Groups <- metadata$Group %>% unique() %>% as.character()
     Timepoints <- metadata$Timepoint %>% unique() %>% as.character()
     Conditions <- metadata$Condition %>% unique() %>% as.character()
     Individuals <- metadata$individualID %>% unique() %>% as.character()
     
-    tipify(selectInput("BFrefGroup", "Reference group",
+    shinyBS::tipify(selectInput("BFrefGroup", "Reference group",
                        choices = if (input$BFgroup == "individualID") { Individuals }
                        else if (input$BFgroup == "Timepoint") { Timepoints }
                        else if (input$BFgroup == "Group") { Groups }
@@ -612,7 +620,7 @@ server <- function(input, output) {
     req(fileM)
     validate(need(extM == "rds", "Please upload an RDS file"))
     
-    metadata <- readRDS(fileM$datapath)
+    metadata <- base::readRDS(fileM$datapath)
     ColNames <- colnames(metadata)
     Groups <- metadata$Group %>% unique() %>% as.character()
     Timepoints <- metadata$Timepoint %>% unique() %>% as.character()
@@ -629,7 +637,7 @@ server <- function(input, output) {
     req(fileM)
     validate(need(extM == "rds", "Please upload an RDS file"))
     
-    metadata <- readRDS(fileM$datapath)
+    metadata <- base::readRDS(fileM$datapath)
     ColNames <- colnames(metadata)
     Groups <- metadata$Group %>% unique() %>% as.character()
     Timepoints <- metadata$Timepoint %>% unique() %>% as.character()
@@ -644,74 +652,79 @@ server <- function(input, output) {
                           else if (input$BFsubsetCol == "Condition") { Conditions }
                           else if (input$BFsubsetCol == "sampleID") { Samples })
   })
-    output$bfPlot <- renderPlot({
-      file <- input$bfratio
-      ext <- tools::file_ext(file$datapath)
-      
-      req(file)
-      validate(need(ext == "rds", "Please upload an RDS file"))
-      bfratio <- readRDS(file$datapath)
-      
+  plot_bf <- reactive({
+    file <- input$bfratio
+    ext <- tools::file_ext(file$datapath)
+    
+    req(file)
+    validate(need(ext == "rds", "Please upload an RDS file"))
+    bfratio <- base::readRDS(file$datapath)
+    bfTheme <- theme_classic() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.95, size = 14),
+            text = element_text(size = 14),
+            line = element_line(size = 0.1), 
+            rect = element_rect(size = 0.1), 
+            plot.margin = margin(2,2,2,1, "cm"))
+    
     if (input$BFsubsetTick == "TRUE" && input$BFcheckRef == "overall") {
       subsetBF <- bfratio %>% dplyr::filter(.data[[input$BFsubsetCol]] == as.character(input$BFsubset))
-      subsetBF %>%
+      BFplot <- subsetBF %>%
         ggplot(aes_string(x = input$BFgroup, y = "bfratio",
-                             fill = input$BFcolour)) + 
+                          fill = input$BFcolour)) + 
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
         scale_fill_brewer(input$bfPalette) +
-        stat_compare_means() +
-        theme_classic() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 14),
-              text = element_text(size = 14),
-              line = element_line(size = 0.1), 
-              rect = element_rect(size = 0.1))
+        ggpubr::stat_compare_means() +
+        bfTheme
+      BFplot
     } else if (input$BFsubsetTick == "FALSE" && input$BFcheckRef == "overall") {
-        bfratio %>% 
-          ggplot(aes_string(x = input$BFgroup, y = "bfratio",
-                            fill = input$BFcolour)) + 
-          geom_boxplot() +
-          labs(title = input$bfTitle,
-               y = "Bacteroidetes:Firmicutes Ratio") +
-          scale_fill_brewer(input$bfPalette) +
-          stat_compare_means() +
-          theme_classic() +
-          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 14),
-                text = element_text(size = 14),
-                line = element_line(size = 0.1), 
-                rect = element_rect(size = 0.1))
+      BFplot <- bfratio %>% 
+        ggplot(aes_string(x = input$BFgroup, y = "bfratio",
+                          fill = input$BFcolour)) + 
+        geom_boxplot() +
+        labs(title = input$bfTitle,
+             y = "Bacteroidetes:Firmicutes Ratio") +
+        scale_fill_brewer(input$bfPalette) +
+        ggpubr::stat_compare_means() +
+        bfTheme
+      BFplot
     } else if (input$BFsubsetTick == "TRUE" && input$BFcheckRef == "refGroup") {
       subsetBF <- bfratio %>% dplyr::filter(.data[[input$BFsubsetCol]] == as.character(input$BFsubset))
-      subsetBF %>%
+      BFplotsubsetBF %>%
         ggplot(aes_string(x = input$BFgroup, y = "bfratio",
                           fill = input$BFcolour)) + 
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
         scale_fill_brewer(input$bfPalette) +
-        stat_compare_means(ref.group = input$BFrefGroup) +
-        theme_classic() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 14),
-              text = element_text(size = 14),
-              line = element_line(size = 0.1), 
-              rect = element_rect(size = 0.1))
+        ggpubr::stat_compare_means(ref.group = input$BFrefGroup) +
+        bfTheme
+      BFplot
     } else if (input$BFsubsetTick == "FALSE" && input$BFcheckRef == "refGroup") {
-      bfratio %>% 
+      BFplot <- bfratio %>% 
         ggplot(aes_string(x = input$BFgroup, y = "bfratio",
                           fill = input$BFcolour)) + 
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
         scale_fill_brewer(input$bfPalette) +
-        stat_compare_means(ref.group = input$BFrefGroup) +
-        theme_classic() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = 14),
-              text = element_text(size = 14),
-              line = element_line(size = 0.1), 
-              rect = element_rect(size = 0.1))
+        ggpubr::stat_compare_means(ref.group = input$BFrefGroup) +
+        bfTheme
+      BFplot
     }
-    }) 
+  })
+  output$bfPlot <- renderPlot({
+      plot_bf()
+    }, height = 600, width = 1000)
+    output$expBF <- downloadHandler(
+      filename = function() {
+        paste(input$bfTitle)
+      },
+      content = function(file) {
+        ggplot2::ggsave(file, plot = plot_bf(), device = "png", scale = 1)
+      }
+    )
 }
 
 shinyApp(server = server, ui = ui)
