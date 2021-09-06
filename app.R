@@ -41,7 +41,8 @@ ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisatio
                                              tags$li("Once uploaded, the metadata table will be shown on the right and can be interactively browsed using the 
                                                      headers and search functions. The metadata file must be uploaded to view any other file, the remaining files can be uploaded as required."), 
                                              tags$li("The phyloseq file will be summarised below, including information on min/max reads and metadata information."),
-                                             tags$li("Alpha diversity can be in the form of Shannon diversity or Pielou's evenness."),
+                                             tags$li("Alpha diversity can be any measure of alpha diversity (e.g. Shannon index, Chao1 index or Pielou's evenness). The column containing alpha diversity values 
+                                                     must be the final column in the alpha diversity table."),
                                              tags$li("Beta diversity can be in the form of bray-curtis or jaccard metrics. This should be uploaded in two separate files; 
                                                      betaCounts is a count matrix created using transform_sample_counts(), betaOrd is an ordination
                                                      of this betaCounts object. Both files are required to create the beta diversity plot with plot_ordination()"),
@@ -64,6 +65,10 @@ ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisatio
                                                        label = "Colour palette",
                                                        choices = c("Set3", "Paired", "Spectral", "RdYlGn"),
                                                        selected = "Spectral"),
+                                           radioButtons("taxExpType", label = "Export plot as",
+                                                        choiceNames = c("PDF", "PNG"),
+                                                        choiceValues = c("pdf", "png"),
+                                                        inline = TRUE),
                                            downloadButton("expBarplot", "Export Barplot")),
                                     column(10, plotOutput("barplot"))
                            )),
@@ -93,6 +98,10 @@ ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisatio
                                                        choices = c("Dark2", "Set1", "Set2", "Set3", 
                                                                    "Pastel2", "Accent", "Paired", "Spectral"),
                                                        selected = "Spectral"),
+                                           radioButtons("alphaExpType", label = "Export plot as",
+                                                        choiceNames = c("PDF", "PNG"),
+                                                        choiceValues = c("pdf", "png"),
+                                                        inline = TRUE),
                                            p(downloadButton("expAlpha", "Export Plot"))),
                                     column(width = 5, plotOutput("alphadivPlot")),
                                     column(width = 4, h3("Alpha Diversity table"), dataTableOutput("alphadiv"))),
@@ -106,7 +115,11 @@ ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisatio
                                            selectInput("betaPalette",
                                                        label = "Colour palette",
                                                        choices = c("Set1", "Dark2", "Paired", "Spectral"),
-                                                       selected = "Spectral"),
+                                                       selected = "Dark2"),
+                                           radioButtons("betaExpType", label = "Export plot as",
+                                                        choiceNames = c("PDF", "PNG"),
+                                                        choiceValues = c("pdf", "png"),
+                                                        inline = TRUE),
                                            p(downloadButton("expBeta", label = "Export plot"))),
                                     column(10, plotOutput("betaPlot")))
                            ),
@@ -132,6 +145,10 @@ ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisatio
                                                        choices = c("Dark2", "Set1", "Set2", "Set3", 
                                                                    "Pastel2", "Accent", "Paired", "Spectral"),
                                                        selected = "Spectral"),
+                                           radioButtons("bfExpType", label = "Export plot as",
+                                                        choiceNames = c("PDF", "PNG"),
+                                                        choiceValues = c("pdf", "png"),
+                                                        inline = TRUE),
                                            p(downloadButton("expBF", "Export Plot"))),
                                     column(width = 8, plotOutput("bfPlot")))
                   )
@@ -249,7 +266,8 @@ server <- function(input, output) {
       validate(need(ext == "rds", "Please upload an RDS file"))
       physeq <- base::readRDS(file$datapath)
       
-      p <- theme(legend.position = "bottom", 
+      p <- theme(legend.position = "bottom",
+                 title = element_text(size = 20),
                  legend.title = element_text(size = 14), 
                  axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.95),
                  text = element_text(size = 14))
@@ -369,7 +387,7 @@ server <- function(input, output) {
         paste(input$barplotTitle)
       },
       content = function(file) {
-        ggplot2::ggsave(file, plot = plot_barplot(), device = "png")
+        ggplot2::ggsave(file, plot = plot_barplot(), device = input$taxExpType)
       })
     output$alphadiv <- renderDataTable({
     file <- input$alphadiv
@@ -385,22 +403,21 @@ server <- function(input, output) {
     
     req(file)
     validate(need(ext == "rds", "Please upload an RDS file"))
-    shannon <- base::readRDS(file$datapath)
+    alpha <- base::readRDS(file$datapath)
     
-    p <- theme_classic(base_size = 14, base_family = "Open Sans",
-                       base_line_size = 0.09, base_rect_size = 0.1) +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.02, hjust=0.95, size = 14),
+    p <- theme_classic(base_size = 14, base_line_size = 0.09, base_rect_size = 0.1) +
+      theme(title = element_text(size = 20),
+            axis.text.x = element_text(angle = 90, vjust = 0.02, hjust=0.95, size = 14),
             text = element_text(size = 14), line = element_line(size = 0.1), 
             rect = element_rect(size = 0.1), axis.title.y = element_text(vjust = 1), 
             plot.margin = margin(2,2,2,0.5, "cm"), legend.position = "bottom")
     
     if (input$alphadivGeom == "jitter" && input$checkRef == "overall" && input$ADsubsetTick == "FALSE") {
-      alphaPlot <- shannon %>%
+      alphaPlot <- alpha %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           color = input$colour)) + 
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
         suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
@@ -409,12 +426,11 @@ server <- function(input, output) {
         p
       alphaPlot
     } else if (input$alphadivGeom == "boxplot" && input$checkRef == "overall" && input$ADsubsetTick == "FALSE") {
-      alphaPlot <- shannon %>%
+      alphaPlot <- alpha %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           fill = input$colour)) +
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         geom_boxplot() +
         suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
                                              aesthetics = c("colour", "fill"))) +
@@ -422,12 +438,11 @@ server <- function(input, output) {
         p
       alphaPlot
     } else if (input$alphadivGeom == "jitter" && input$checkRef == "refGroup" && input$ADsubsetTick == "FALSE") {
-      alphaPlot <- shannon %>%
+      alphaPlot <- alpha %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           color = input$colour)) + 
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
@@ -436,12 +451,11 @@ server <- function(input, output) {
         p
       alphaPlot
     } else if (input$alphadivGeom == "boxplot" && input$checkRef == "refGroup" && input$ADsubsetTick == "FALSE") {
-      alphaPlot <- shannon %>%
+      alphaPlot <- alpha %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           fill = input$colour)) +
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_boxplot() +
         suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
@@ -449,13 +463,12 @@ server <- function(input, output) {
         p
       alphaPlot
     } else if (input$alphadivGeom == "jitter" && input$checkRef == "overall" && input$ADsubsetTick == "TRUE") {
-      subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
+      subsetAD <- alpha %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
       alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           color = input$colour)) + 
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
         ggpubr::stat_compare_means() +
@@ -464,13 +477,12 @@ server <- function(input, output) {
         p
       alphaPlot
     } else if (input$alphadivGeom == "boxplot" && input$checkRef == "overall" && input$ADsubsetTick == "TRUE") {
-      subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
+      subsetAD <- alpha %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
       alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           fill = input$colour)) +
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         geom_boxplot() +
         ggpubr::stat_compare_means() +
         suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
@@ -478,13 +490,12 @@ server <- function(input, output) {
         p
       alphaPlot
     } else if (input$alphadivGeom == "jitter" && input$checkRef == "refGroup" && input$ADsubsetTick == "TRUE") {
-      subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
+      subsetAD <- alpha %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
       alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           color = input$colour)) + 
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
@@ -493,13 +504,12 @@ server <- function(input, output) {
         p
       alphaPlot
     } else if (input$alphadivGeom == "boxplot" && input$checkRef == "refGroup" && input$ADsubsetTick == "TRUE") {
-      subsetAD <- shannon %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
+      subsetAD <- alpha %>% dplyr::filter(.data[[input$ADsubsetCol]] == as.character(input$ADsubset))
       alphaPlot <- subsetAD %>%
         ggplot(aes_string(x = input$group,
-                          y = "shannon_entropy",
+                          y = colnames(alpha[,ncol(alpha)]),
                           fill = input$colour)) +
-        labs(y = "Shannon Diversity",
-             title = input$alphaTitle) +
+        labs(title = input$alphaTitle) +
         suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
@@ -516,7 +526,7 @@ server <- function(input, output) {
       paste(input$alphaTitle)
     },
     content = function(file) {
-    ggplot2::ggsave(file, plot = plot_div(), device = "png", scale = 1)
+    ggplot2::ggsave(file, plot = plot_div(), device = input$alphaExpType, scale = 2, limitsize = FALSE)
     }
   )
   output$BDcol_ui <- renderUI({
@@ -552,10 +562,10 @@ server <- function(input, output) {
       suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$betaPalette),times=4),
                                            aesthetics = c("colour", "fill"))) +
       theme_bw(base_size = 24, 
-               base_family = "Open Sans", 
                base_line_size = 0.09, 
                base_rect_size = 0.1) +
-      theme(axis.text.x = element_text(size = 14, vjust = 0.2, hjust=0.95), 
+      theme(title = element_text(size = 20),
+            axis.text.x = element_text(size = 14, vjust = 0.2, hjust=0.95), 
             text = element_text(size = 14))
     betaPlot
   })
@@ -567,7 +577,7 @@ server <- function(input, output) {
       paste(input$betaTitle)
     },
     content = function(file) {
-      ggplot2::ggsave(file, plot = plot_beta(), device = "png", scale = 1)
+      ggplot2::ggsave(file, plot = plot_beta(), device = input$betaExpType, scale = 2, limitsize = FALSE)
     }
   )
   output$BFgroup_ui <- renderUI({
@@ -660,7 +670,8 @@ server <- function(input, output) {
     validate(need(ext == "rds", "Please upload an RDS file"))
     bfratio <- base::readRDS(file$datapath)
     bfTheme <- theme_classic() +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.95, size = 14),
+      theme(title = element_text(size = 20),
+            axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.95, size = 14),
             text = element_text(size = 14),
             line = element_line(size = 0.1), 
             rect = element_rect(size = 0.1), 
@@ -674,7 +685,8 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        scale_fill_brewer(input$bfPalette) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means() +
         bfTheme
       BFplot
@@ -685,7 +697,8 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        scale_fill_brewer(input$bfPalette) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means() +
         bfTheme
       BFplot
@@ -697,7 +710,8 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        scale_fill_brewer(input$bfPalette) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means(ref.group = input$BFrefGroup) +
         bfTheme
       BFplot
@@ -708,7 +722,8 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        scale_fill_brewer(input$bfPalette) +
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+                                             aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means(ref.group = input$BFrefGroup) +
         bfTheme
       BFplot
@@ -722,7 +737,7 @@ server <- function(input, output) {
         paste(input$bfTitle)
       },
       content = function(file) {
-        ggplot2::ggsave(file, plot = plot_bf(), device = "png", scale = 1)
+        ggplot2::ggsave(file, plot = plot_bf(), device = input$bfExpType, scale = 2, limitsize = FALSE)
       }
     )
 }
