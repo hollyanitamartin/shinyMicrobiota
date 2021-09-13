@@ -1,22 +1,13 @@
-library(ggplot2) ## Used
-library(dplyr) ## Used
-library(microbiome) ## Used
-library(ggpubr) ##Used
-library(phyloseq) ## Used
-library(RColorBrewer) ## Used
-library(shinyBS) ## Used
-library(shiny) ## Used 
+library(ggplot2)
+library(dplyr)
+library(microbiome)
+library(ggpubr)
+library(phyloseq)
+library(RColorBrewer)
+library(shinyBS)
+library(shiny)
 
-### Possible names for the app:
-# shinyMicRobiota
-# micRobiota
-# shinyAmplicon
-# microbialVisualisR
-# microbiotR
-# microbiotaViz
-# ############################
-
-ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisation", windowTitle = "16S Microbial Analysis"),
+ui <- fluidPage(titlePanel("shinyMicrobiota: A Shiny app for 16S sequencing data visualisation", windowTitle = "shinyMicrobiota"),
                 tabsetPanel(          
                   tabPanel(title = "Data",
                            fluidRow(column(2, h2("Data set up"),
@@ -36,8 +27,8 @@ ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisatio
                                     column(5, h3("How to upload your data"),"Text Instructions",
                                            tags$ol(
                                              tags$li("Upload data from pre-saved RDS files using the browse buttons to the left.
-                                             These files are created using the buildPhylo.R script from QIIME2 output. Metadata column names and phyloseq sample_data must include: 
-                                             'sampleID', 'individualID', 'Timepoint', 'Group', and 'Condition', but may include additional column names."), 
+                                             These files are created using the exampleBuild.R script from QIIME2 output. Metadata column names and phyloseq sample_data must include: 
+                                             'sampleID', 'individualID', 'Timepoint', 'Group', and 'Condition', but may include additional columns."), 
                                              tags$li("Once uploaded, the metadata table will be shown on the right and can be interactively browsed using the 
                                                      headers and search functions. The metadata file must be uploaded to view any other file, the remaining files can be uploaded as required."), 
                                              tags$li("The phyloseq file will be summarised below, including information on min/max reads and metadata information."),
@@ -65,6 +56,9 @@ ui <- fluidPage(titlePanel("micRobiotaViz: A Shiny app for 16S data visualisatio
                                                        label = "Colour palette",
                                                        choices = c("Set3", "Paired", "Spectral", "RdYlGn"),
                                                        selected = "Spectral"),
+                                           checkboxInput("subsetSubject_tick", "Subset by individual? [Under Construction]"),
+                                           conditionalPanel(condition = "input.subsetSubject_tick" == "TRUE",
+                                             uiOutput("subsetSubject_ui")),
                                            radioButtons("taxExpType", label = "Export plot as",
                                                         choiceNames = c("PDF", "PNG"),
                                                         choiceValues = c("pdf", "png"),
@@ -258,6 +252,19 @@ server <- function(input, output) {
                   else if (input$ADsubsetCol == "Condition") { Conditions }
                   else if (input$ADsubsetCol == "sampleID") { Samples })
     })
+    output$subsetSubject_ui <- renderUI({
+      req(input$subsetSubject_tick)
+      fileM <- input$metadata
+      extM <- tools::file_ext(fileM$datapath)
+      req(fileM)
+      validate(need(extM == "rds", "Please upload an RDS file"))
+      
+      metadata <- base::readRDS(fileM$datapath)
+      Individuals <- metadata$individualID %>% unique() %>% as.character()
+      
+      selectInput("subsetSubject", "Select Individual ID",
+                  choices = Individuals)
+      })
     plot_barplot <- reactive({
       file <- input$physeq
       ext <- tools::file_ext(file$datapath)
@@ -265,13 +272,12 @@ server <- function(input, output) {
       req(file)
       validate(need(ext == "rds", "Please upload an RDS file"))
       physeq <- base::readRDS(file$datapath)
-      
       p <- theme(legend.position = "bottom",
-                 title = element_text(size = 20),
-                 legend.title = element_text(size = 14), 
-                 axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.95),
-                 text = element_text(size = 14))
-      
+              title = element_text(size = 20),
+              legend.title = element_text(size = 14),
+              axis.text.x = element_text(angle = 90, vjust = 0.2, hjust=0.95),
+              text = element_text(size = 14),panel.background = element_rect(fill="gray95"))
+
       taxaPlot <- if (input$taxLevel == "Kingdom") {
         kingdom_ps <- microbiome::transform(physeq, "compositional")
         kingdom_ps <- microbiome::aggregate_rare(kingdom_ps, level = "Kingdom", detection = 1/100, prevalence = 50/100)
@@ -291,7 +297,11 @@ server <- function(input, output) {
         phylum_ps <- microbiome::aggregate_rare(phylum_ps, level = "Phylum", detection = 1/100, prevalence = 50/100)
         phylum_ps <- phylum_ps %>% microbiome::aggregate_taxa(level = "Phylum") %>%  
           microbiome::transform(transform = "compositional")
-        
+        if (input$subsetSubject_tick == TRUE) {
+          ## Needs work. If "AYA_0740" instead  of .data[[input$subsetSubject]] or "input.subsetSubject" it works.
+          # even with ID written non-dynamically, order of samples not logical (e.g D33, Dx, D79).
+          phylum_ps <- phyloseq::subset_samples(phylum_ps, individualID == "input.subsetSubject")
+        }
         taxaPlot <- microbiome::plot_composition(phylum_ps, x.label = "Sample",
                                                  plot.type = "barplot",
                                                  sample.sort = "Bacteroidetes") +
@@ -387,7 +397,7 @@ server <- function(input, output) {
         paste(input$barplotTitle)
       },
       content = function(file) {
-        ggplot2::ggsave(file, plot = plot_barplot(), device = input$taxExpType)
+        ggplot2::ggsave(file, plot = plot_barplot(), device = input$taxExpType, scale = 2, limitsize = FALSE)
       })
     output$alphadiv <- renderDataTable({
     file <- input$alphadiv
@@ -420,7 +430,7 @@ server <- function(input, output) {
         labs(title = input$alphaTitle) +
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means() +
         p
@@ -432,7 +442,7 @@ server <- function(input, output) {
                           fill = input$colour)) +
         labs(title = input$alphaTitle) +
         geom_boxplot() +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means() +
         p
@@ -446,7 +456,7 @@ server <- function(input, output) {
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         p
       alphaPlot
@@ -458,7 +468,7 @@ server <- function(input, output) {
         labs(title = input$alphaTitle) +
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_boxplot() +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         p
       alphaPlot
@@ -472,7 +482,7 @@ server <- function(input, output) {
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
         ggpubr::stat_compare_means() +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         p
       alphaPlot
@@ -485,7 +495,7 @@ server <- function(input, output) {
         labs(title = input$alphaTitle) +
         geom_boxplot() +
         ggpubr::stat_compare_means() +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         p
       alphaPlot
@@ -499,7 +509,7 @@ server <- function(input, output) {
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_jitter(size = 4, alpha = 0.5, width = 0.03) +
         ggplot2::stat_summary(fun = "median", geom = "point", size = 6) +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         p
       alphaPlot
@@ -510,7 +520,7 @@ server <- function(input, output) {
                           y = colnames(alpha[,ncol(alpha)]),
                           fill = input$colour)) +
         labs(title = input$alphaTitle) +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$divPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means(ref.group = input$alphaRefGroup) +
         geom_boxplot() +
@@ -559,7 +569,7 @@ server <- function(input, output) {
                                 color = input$BDcolour) +
       geom_point(size = 5) +
       labs(title = input$betaTitle) +
-      suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$betaPalette),times=4),
+      suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$betaPalette),times=6),
                                            aesthetics = c("colour", "fill"))) +
       theme_bw(base_size = 24, 
                base_line_size = 0.09, 
@@ -685,7 +695,7 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means() +
         bfTheme
@@ -697,7 +707,7 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means() +
         bfTheme
@@ -710,7 +720,7 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means(ref.group = input$BFrefGroup) +
         bfTheme
@@ -722,7 +732,7 @@ server <- function(input, output) {
         geom_boxplot() +
         labs(title = input$bfTitle,
              y = "Bacteroidetes:Firmicutes Ratio") +
-        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=4),
+        suppressWarnings(scale_colour_manual(values=rep(brewer.pal(12,input$bfPalette),times=6),
                                              aesthetics = c("colour", "fill"))) +
         ggpubr::stat_compare_means(ref.group = input$BFrefGroup) +
         bfTheme
@@ -732,14 +742,14 @@ server <- function(input, output) {
   output$bfPlot <- renderPlot({
       plot_bf()
     }, height = 600, width = 1000)
-    output$expBF <- downloadHandler(
-      filename = function() {
-        paste(input$bfTitle)
-      },
-      content = function(file) {
-        ggplot2::ggsave(file, plot = plot_bf(), device = input$bfExpType, scale = 2, limitsize = FALSE)
-      }
-    )
+  output$expBF <- downloadHandler(
+    filename = function() {
+      paste(input$bfTitle)
+    },
+    content = function(file) {
+      ggplot2::ggsave(file, plot = plot_bf(), device = input$bfExpType, scale = 2, limitsize = FALSE)
+    }
+  )
 }
 
 shinyApp(server = server, ui = ui)
