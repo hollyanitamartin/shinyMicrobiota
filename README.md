@@ -19,6 +19,8 @@ To launch shinyMicrobiota, download the `app.R` script and run this from RStudio
 ### Data processing
 If you wish to use your own amplicon data, ata must be pre-processed in R before uploading to shinyMicrobiota. This pre-processing allows for the reactivity of the app to function successfully and ensures that plots are made correctly. The data to be uploaded is: metadata, phyloseq, alpha diversity, two beta diversity files, and the bacteroidetes to firmicutes ratio. These should all be imported into R (for example, using `qiime2R::read_qza()` for files outputted from the QIIME2 workflow, or `dplyr::read_tsv()` for metadata files). The QIIME2 files (metadata, features, taxonomy and tree) are combined to form a `phyloseq` object. Metadata and diversity files should be pre-processed to alter any variables as needed, ensure that the required column names (sampleID, individualID, Timepoint, Group, and Condition) exist in both the metadata and `phyloseq` objects, remove `q2-types` row, and perform any other data wrangling as required for the dataset. After sufficient pre-processing has been performed, all R objects should be saved in RDS format using `base::saveRDS()` which can then be uploaded to shinyMicrobiota. The app's "Data" page provides brief instructions on data requirements and a detailed example of the pre-processing workflow is provided in the `exampleBuild.R` script in the GitHub repository.
 
+### Requirements
+
 shinyMicrobiota requires the following R packages to run: `ggplot2`, `dplyr`, `microbiome`, `ggpubr`, `phyloseq`, `RColorBrewer`, `shinyBS` and `shiny`, which can be installed with:
 
 ```
