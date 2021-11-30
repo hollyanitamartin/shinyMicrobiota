@@ -39,8 +39,7 @@ ui <- fluidPage(titlePanel("shinyMicrobiota: A Shiny app for 16S sequencing data
                                                      of this betaCounts object. Both files are required to create the beta diversity plot with plot_ordination()"),
                                              tags$li("The phyloseq summary section will show information about the phyloseq object once it has been created"),
                                              tags$li("For colour-blind friendly plots, select one of the following colour palettes from the drop-down menus: 
-                                                     'Paired', 'Dark2', 'Set2', 'RdYlBu'.")
-                                    ),
+                                                     'Paired', 'Dark2', 'Set2', 'RdYlBu'.")),
                                            h3("Phyloseq summary"), textOutput("physeq_sum")),
                                     column(4, h3("Metadata"),
                                            dataTableOutput("metadata")),
