@@ -1,22 +1,22 @@
-# shinyMicrobiota 'Plug and Play' dataset
+# shinyMicrobiota 'unprocessed' dataset
 
-Here we have included a 'Plug and Play' dataset that can be uploaded to shinyMicrobiota to allow you to have a play around with with the Shiny app without performing your own data processing.
+Here we have included an 'unprocessed' dataset that requires some data manipulation in RStudio to produce the outputs that can then be uploaded to shinyMicrobiota. The purpose of this is to give users an opportunity to try this data processing step which is similar to what would be required to before uploading your own data to shinyMicrobiota. If you prefer to use a dataset that is ready to go, have a look at the 'shinyMicrobiota/test_data/plug_and_play' directory in this repo.
 
-If you prefer to try your own R processing of the QIIME2 output files, see the 'shinyMicrobiota/test_data/unprocessed' directory.
 
 ### Data
-This dataset consists of 6 files generated from 16S V4 rRNA amplicon sequencing data from [Jangi *et al.*, 2016](https://doi.org/10.1038/ncomms12015). The raw sequencing data is available on NCBI's Sequencing Read Archive (SRA) with the accession number [PRJNA321051](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA321051/).The samples were collected from healthy controls and patients with Multiple Sclerosis. 
+This dataset consists of 6 files generated from the QIIME2 workflow. The raw data consisted of 16S V4 rRNA amplicon sequencing data from [Jangi *et al.*, 2016](https://doi.org/10.1038/ncomms12015). The raw sequencing data is available on NCBI's Sequencing Read Archive (SRA) with the accession number [PRJNA321051](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA321051/).The samples were collected from healthy controls and patients with Multiple Sclerosis. 
 
 ### Instructions
 
 1. Download the following files to your local computer:
-   - `1_metadata.rds`: Processed metadata file       
-   - `2_physeq.rds`: `phyloseq` object created from QIIME2 output files    
-   - `3_shannon.rds`: Alpha diversity values (Shannon's Index)
-   - `4_betaCounts.rds`: Beta diversity counts
-   - `5_betaOrd.rds`: Beta diversity ordination
-   - `6_bfratio.rds`: *Bacteroidetes* to *Firmicutes* Ratio
-   - `app.R`: shinyMicrobiota script (located in the root directory of this repo)
+   - `buildMS.R`: R script for data manipulation       
+   - `evenness_vector.qza`: Alpha diversity values (Pielou's Evenness)   
+   - `filt-feature-table.qza`: Feature table
+   - `hybrid-taxonomy.qza`: Taxonomic assignment
+   - `rooted-tree.qza`: Rooted phylogenetic tree
+   - `shannon_vector.qza`: Alpha diversity values (Shannon's Index)   
+   - `subset_metadata_MS.tsv`: Unprocessed metadata file
+2. Open the `buildMS.R` R script in RStudio and modify the file paths to match where your downloaded files are. 
 2. Open `app.R` in RStudio and click the `Run App` button in the top right of the `app.R` window. This will launch shinyMicrobiota in your browser. 
 3. Upload the above files to shinyMicrobiota using the instructions provided on the 'Data' landing page.
 
