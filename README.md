@@ -13,7 +13,7 @@ Each of these plots can be customised using Shiny's reactive programming to disp
 
 ### Quick Start
 
-To launch shinyMicrobiota, download the `app.R` script and run this from RStudio; this will launch the app in your browser. See the 'test_data/plug_and_play' directory to download some test data that can be immediately uploaded to the app. 
+To launch shinyMicrobiota, download the `app.R` script and run this from RStudio; this will launch the app in your browser. See the 'test_data/plug_and_play' directory to download some test data that can be immediately uploaded to the app. We are working on hosting it on a web server so if you don't have RStudio stay tuned for future developments!
 
 
 ### Data processing
