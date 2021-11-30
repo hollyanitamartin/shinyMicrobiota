@@ -6,9 +6,11 @@ library(tidyverse)
 ##### Metadata #####
 
 # Import Metadata. If comma-separated, replace 'tsv' with 'csv'.
-metadata <- readr::read_tsv("/media/Datas/Bioinformatics/MS_testdata/subset_metadata_MS.tsv")
+metadata <- readr::read_tsv("/your/path/to/subset_metadata_MS.tsv")
+
 # Remove #q2:types row (must only perform once)
-# metadata <- metadata[-1,]
+metadata <- metadata[-1,]
+
 # Reformat/improve poor data entries
 metadata$host_phenotype <- str_replace_all(metadata$host_phenotype, 
                                            "Multiple_Sclerosis", "MS")
@@ -39,25 +41,25 @@ metadata$Group <- factor(metadata$Group,
                          labels = c("Healthy_Control", "MS_in_remission"))
 metadata$Condition <- factor(metadata$Condition)
 # Write metadata object as a tsv file for use in creating the phyloseq object.
-write_tsv(metadata, "/media/Datas/Bioinformatics/MS_testdata/metadata_MS_R.tsv")
+write_tsv(metadata, "/your/path/to/metadata_MS_R.tsv")
 
 ##### Phyloseq #####
 
 # Build phyloseq object from QIIME2 output and metadata table as created above.
-physeq <- qiime2R::qza_to_phyloseq(features = "/media/Datas/Bioinformatics/MS_testdata/qiime/filt-feature-table.qza",
-                                   tree = "/media/Datas/Bioinformatics/MS_testdata/qiime/rooted-tree.qza",
-                                   taxonomy = "/media/Datas/Bioinformatics/MS_testdata/qiime/hybrid-taxonomy.qza",
-                                   metadata = "/media/Datas/Bioinformatics/MS_testdata/metadata_MS_R.tsv")
+physeq <- qiime2R::qza_to_phyloseq(features = "/your/path/to/filt-feature-table.qza",
+                                   tree = "/your/path/to/rooted-tree.qza",
+                                   taxonomy = "/your/path/to/hybrid-taxonomy.qza",
+                                   metadata = "/your/path/to/metadata_MS_R.tsv")
 
 ##### Alpha Diversity #####
 
 # Import Shannon diversity metrics and add metadata (example for .qza QIIME2 format).
-shannon <- qiime2R::read_qza("/media/Datas/Bioinformatics/MS_testdata/qiime/core-diversity/shannon_vector.qza")
+shannon <- qiime2R::read_qza("/your/path/to/shannon_vector.qza")
 shannon <- shannon$data %>% tibble::rownames_to_column("sampleID")
 shannon <- left_join(metadata, shannon)
 
 # Import Pielou's evenness diversity metrics and add metadata (example for .tsv format).
-evenness <- qiime2R::read_qza("/media/Datas/Bioinformatics/MS_testdata/qiime/core-diversity/evenness_vector.qza")
+evenness <- qiime2R::read_qza("/your/path/to/evenness_vector.qza")
 evenness <- evenness$data %>% tibble::rownames_to_column("sampleID")
 evenness <- left_join(metadata, evenness)
 
@@ -77,10 +79,10 @@ colnames(bfratio) <- c("sampleID", "bfratio")
 bfratio <- left_join(metadata, bfratio)
 
 ##### Save all R object as .rds files for upload to shinyMicrobiota.
-saveRDS(metadata, file = "/media/Datas/Bioinformatics/shiny/data/MS_dataset/1_metadata.rds")
-saveRDS(physeq, file = "/media/Datas/Bioinformatics/shiny/data/MS_dataset/2_physeq.rds")
-saveRDS(shannon, file = "/media/Datas/Bioinformatics/shiny/data/MS_dataset/3_shannon.rds")
-saveRDS(betaCounts, file = "/media/Datas/Bioinformatics/shiny/data/MS_dataset/4_betaCounts.rds")
-saveRDS(betaOrd, file = "/media/Datas/Bioinformatics/shiny/data/MS_dataset/5_betaOrd.rds")
-saveRDS(bfratio, file = "/media/Datas/Bioinformatics/shiny/data/MS_dataset/6_bfratio.rds")
-saveRDS(evenness, file = "/media/Datas/Bioinformatics/shiny/data/MS_dataset/7_evenness.rds")
+saveRDS(metadata, file = "/save/location/for/1_metadata.rds")
+saveRDS(physeq, file = "/save/location/for/2_physeq.rds")
+saveRDS(shannon, file = "/save/location/for/3_shannon.rds")
+saveRDS(betaCounts, file = "/save/location/for/4_betaCounts.rds")
+saveRDS(betaOrd, file = "/save/location/for/5_betaOrd.rds")
+saveRDS(bfratio, file = "/save/location/for/6_bfratio.rds")
+saveRDS(evenness, file = "/save/location/for/7_evenness.rds")
