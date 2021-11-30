@@ -1,10 +1,12 @@
 # shinyMicrobiota 'unprocessed' dataset
 
-Here we have included an 'unprocessed' dataset that requires some data manipulation in RStudio to produce the outputs that can then be uploaded to shinyMicrobiota. The purpose of this is to give users an opportunity to try this data processing step which is similar to what would be required to before uploading your own data to shinyMicrobiota. If you prefer to use a dataset that is ready to go, have a look at the 'shinyMicrobiota/test_data/plug_and_play' directory in this repo.
+Here we have included an unprocessed dataset that requires some data manipulation in RStudio to produce the outputs that can then be uploaded to shinyMicrobiota. The purpose of this is to give users an opportunity to try this data processing step which is similar to what would be required to before uploading your own data to shinyMicrobiota. 
+
+If you prefer to use a dataset that is ready to go, have a look at the 'shinyMicrobiota/test_data/plug_and_play' directory in this repository.
 
 
 ### Data
-This dataset consists of 6 files generated from the QIIME2 workflow. The raw data consisted of 16S V4 rRNA amplicon sequencing data from [Jangi *et al.*, 2016](https://doi.org/10.1038/ncomms12015). The raw sequencing data is available on NCBI's Sequencing Read Archive (SRA) with the accession number [PRJNA321051](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA321051/).The samples were collected from healthy controls and patients with Multiple Sclerosis. 
+This dataset consists of 6 files generated from the QIIME2 workflow. The raw data consists of 16S V4 rRNA amplicon sequencing data from [Jangi *et al.*, 2016](https://doi.org/10.1038/ncomms12015). The raw sequencing data is available on NCBI's Sequencing Read Archive (SRA) with the accession number [PRJNA321051](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA321051/).The samples were collected from healthy controls and patients with Multiple Sclerosis. 
 
 ### Instructions
 
@@ -16,9 +18,9 @@ This dataset consists of 6 files generated from the QIIME2 workflow. The raw dat
    - `rooted-tree.qza`: Rooted phylogenetic tree
    - `shannon_vector.qza`: Alpha diversity values (Shannon's Index)   
    - `subset_metadata_MS.tsv`: Unprocessed metadata file
-2. Open the `buildMS.R` R script in RStudio and modify the file paths to match where your downloaded files are. 
+2. Open the `buildMS.R` R script in RStudio and modify the file paths to match the location of your downloaded files. I encourage you to use this script as a guide and to verify that the changes made at each step are appropriate for the data. Any other data manipulation may be added as seen fit.  
 2. Open `app.R` in RStudio and click the `Run App` button in the top right of the `app.R` window. This will launch shinyMicrobiota in your browser. 
-3. Upload the above files to shinyMicrobiota using the instructions provided on the 'Data' landing page.
+3. Upload the `.rds` files produces with your R script to shinyMicrobiota using the instructions provided on the 'Data' landing page.
 
 
 ### Citations
