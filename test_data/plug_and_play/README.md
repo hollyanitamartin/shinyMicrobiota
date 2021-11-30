@@ -1,4 +1,4 @@
-# shinyMicrobiota 'Plug and Play' dataset (incomplete)
+# shinyMicrobiota 'Plug and Play' dataset
 
 Here we have included a 'Plug and Play' dataset that can be uploaded to shinyMicrobiota to allow you to have a play around with with the Shiny app without performing your own data processing.
 
