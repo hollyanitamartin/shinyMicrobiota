@@ -45,8 +45,12 @@ year = {2016}
 
 shinyMicrobiota software:
 ```
-@software{Martin_shinyMicrobiota,
-author = {Martin, Holly},
-title = {{shinyMicrobiota}}
+@misc{Martin_shinyMicrobiota,
+  author = {Martin, Holly},
+  title = {shinyMicrobiota},
+  year = {2021},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/hollyanitamartin/shinyMicrobiota/}},
 }
 ```
